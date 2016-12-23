@@ -8,10 +8,7 @@ Author: Andreas Heigl <a.heigl@wdv.de>
 Author URI: http://andreas.heigl.org
 */
 
-// 2016-12-23 MLF: Adding a few new constants I want to make sure are defined
-if( !defined('AUTHLDAP_SHOW_ADMIN_MENU') ){
-    define('AUTHLDAP_SHOW_ADMIN_MENU', true);
-}
+// This version has no admin as ALL configuration comes from constants
 
 require_once dirname(__FILE__) . '/ldap.php';
 
@@ -23,91 +20,11 @@ function authLdap_debug($message)
 }
 
 
-function authLdap_addmenu()
-{
-    if (function_exists('add_options_page')) {
-        add_options_page('AuthLDAP', 'AuthLDAP', 'manage_options', basename(__FILE__), 'authLdap_options_panel');
-    }
-}
-
 function authLdap_get_post($name, $default = '')
 {
     return isset($_POST[$name]) ? $_POST[$name] : $default;
 }
 
-function authLdap_options_panel()
-{
-    // inclusde style sheet
-    wp_enqueue_style('authLdap-style', plugin_dir_url(__FILE__) . 'authLdap.css');
-
-    if (($_SERVER['REQUEST_METHOD'] == 'POST') && array_key_exists('ldapOptionsSave', $_POST)) {
-        $new_options = array(
-            'Enabled'       => authLdap_get_post('authLDAPAuth', false),
-            'CachePW'       => authLdap_get_post('authLDAPCachePW', false),
-            'URI'           => authLdap_get_post('authLDAPURI'),
-            'URISeparator'  => authLdap_get_post('authLDAPURISeparator'),
-            'StartTLS'      => authLdap_get_post('authLDAPStartTLS', false),
-            'Filter'        => authLdap_get_post('authLDAPFilter'),
-            'NameAttr'      => authLdap_get_post('authLDAPNameAttr'),
-            'SecName'       => authLdap_get_post('authLDAPSecName'),
-            'UidAttr'       => authLdap_get_post('authLDAPUidAttr'),
-            'MailAttr'      => authLdap_get_post('authLDAPMailAttr'),
-            'WebAttr'       => authLdap_get_post('authLDAPWebAttr'),
-            'Groups'        => authLdap_get_post('authLDAPGroups', array()),
-            'GroupSeparator'=> authLdap_get_post('authLDAPGroupSeparator', ','),
-            'Debug'         => authLdap_get_post('authLDAPDebug', false),
-            'GroupAttr'     => authLdap_get_post('authLDAPGroupAttr'),
-            'GroupFilter'   => authLdap_get_post('authLDAPGroupFilter'),
-            'DefaultRole'   => authLdap_get_post('authLDAPDefaultRole'),
-            'GroupEnable'   => authLdap_get_post('authLDAPGroupEnable', false),
-            'GroupOverUser' => authLdap_get_post('authLDAPGroupOverUser', false),
-        );
-        if (authLdap_set_options($new_options)) {
-            echo "<div class='updated'><p>Saved Options!</p></div>";
-        } else {
-            echo "<div class='error'><p>Could not save Options!</p></div>";
-        }
-    }
-
-    // Do some initialization for the admin-view
-    $authLDAP              = authLdap_get_option('Enabled');
-    $authLDAPCachePW       = authLdap_get_option('CachePW');
-    $authLDAPURI           = authLdap_get_option('URI');
-    $authLDAPURISeparator  = authLdap_get_option('URISeparator');
-    $authLDAPStartTLS      = authLdap_get_option('StartTLS');
-    $authLDAPFilter        = authLdap_get_option('Filter');
-    $authLDAPNameAttr      = authLdap_get_option('NameAttr');
-    $authLDAPSecName       = authLdap_get_option('SecName');
-    $authLDAPMailAttr      = authLdap_get_option('MailAttr');
-    $authLDAPUidAttr       = authLdap_get_option('UidAttr');
-    $authLDAPWebAttr       = authLdap_get_option('WebAttr');
-    $authLDAPGroups        = authLdap_get_option('Groups');
-    $authLDAPGroupSeparator= authLdap_get_option('GroupSeparator');
-    $authLDAPDebug         = authLdap_get_option('Debug');
-    $authLDAPGroupAttr     = authLdap_get_option('GroupAttr');
-    $authLDAPGroupFilter   = authLdap_get_option('GroupFilter');
-    $authLDAPDefaultRole   = authLdap_get_option('DefaultRole');
-    $authLDAPGroupEnable   = authLdap_get_option('GroupEnable');
-    $authLDAPGroupOverUser = authLdap_get_option('GroupOverUser');
-
-    $tChecked              = ($authLDAP)               ? ' checked="checked"' : '';
-    $tDebugChecked         = ($authLDAPDebug)          ? ' checked="checked"' : '';
-    $tPWChecked            = ($authLDAPCachePW)        ? ' checked="checked"' : '';
-    $tGroupChecked         = ($authLDAPGroupEnable)    ? ' checked="checked"' : '';
-    $tGroupOverUserChecked = ($authLDAPGroupOverUser)  ? ' checked="checked"' : '';
-    $tStartTLSChecked      = ($authLDAPStartTLS)       ? ' checked="checked"' : '';
-
-    $roles = new WP_Roles();
-
-    $action = $_SERVER['REQUEST_URI'];
-    if (! extension_loaded('ldap')) {
-        echo '<div class="warning">The LDAP-Extension is not available on your '
-            . 'WebServer. Therefore Everything you can alter here does not '
-            . 'make any sense!</div>';
-    }
-
-    include dirname(__FILE__) . '/view/admin.phtml';
-}
 
 /**
  * get a LDAP server object
@@ -132,7 +49,7 @@ function authLdap_get_server()
 
         //$authLDAPURI = 'ldap:/foo:bar@server/trallala';
         authLdap_debug('connect to LDAP server');
-        require_once dirname(__FILE__) . '/src/LdapList.php';
+        require_once dirname(__FILE__) . '/authldap_classes/LdapList.php';
         $_ldapserver = new \Org_Heigl\AuthLdap\LdapList();
         foreach ($authLDAPURI as $uri) {
             $_ldapserver->addLdap(new \Org_Heigl\AuthLdap\LDAP($uri, $authLDAPDebug, $authLDAPStartTLS));
@@ -799,10 +716,6 @@ function authLdap_send_change_email($result, $user, $newUserData)
     return $result;
 }
 
-// 2016-12-23 MLF: add ability to hide the menu based on presense of a defined constant
-if( AUTHLDAP_SHOW_ADMIN_MENU ) {
-    add_action('admin_menu', 'authLdap_addmenu');
-}
 add_filter('show_password_fields', 'authLdap_show_password_fields', 10, 2);
 add_filter('allow_password_reset', 'authLdap_allow_password_reset', 10, 2);
 add_filter('authenticate', 'authLdap_login', 10, 3);
