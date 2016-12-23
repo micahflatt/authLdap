@@ -648,7 +648,7 @@ function authLdap_load_options($reload = false)
     foreach ($options as $option_name => $option_value) {
         $constant_name = 'AUTHLDAP_'.strtoupper($option_name);
         if( defined($constant_name) ){
-            $options[$option_name] == constant($constant_name);
+            $options[$option_name] = constant($constant_name);
         }
     }
 
