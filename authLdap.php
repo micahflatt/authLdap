@@ -8,6 +8,11 @@ Author: Andreas Heigl <a.heigl@wdv.de>
 Author URI: http://andreas.heigl.org
 */
 
+// 2016-12-23 MLF: Adding a few new constants I want to make sure are defined
+if( !defined('AUTHLDAP_SHOW_ADMIN_MENU') ){
+    define('AUTHLDAP_SHOW_ADMIN_MENU', true);
+}
+
 require_once dirname(__FILE__) . '/ldap.php';
 
 function authLdap_debug($message)
@@ -721,6 +726,15 @@ function authLdap_load_options($reload = false)
         $options['Version'] = $option_version_plugin;
         update_option('authLDAPOptions', $options);
     }
+
+    // 2016-12-23 MLF (why we forked) Set any options we can find via defined constants
+    foreach ($options as $option_name => $option_value) {
+        $constant_name = 'AUTHLDAP_'.strtoupper($option_name);
+        if( defined($constant_name) ){
+            $options[$option_name] == constant($constant_name);
+        }
+    }
+
     return $options;
 }
 
@@ -785,7 +799,10 @@ function authLdap_send_change_email($result, $user, $newUserData)
     return $result;
 }
 
-add_action('admin_menu', 'authLdap_addmenu');
+// 2016-12-23 MLF: add ability to hide the menu based on presense of a defined constant
+if( AUTHLDAP_SHOW_ADMIN_MENU ) {
+    add_action('admin_menu', 'authLdap_addmenu');
+}
 add_filter('show_password_fields', 'authLdap_show_password_fields', 10, 2);
 add_filter('allow_password_reset', 'authLdap_allow_password_reset', 10, 2);
 add_filter('authenticate', 'authLdap_login', 10, 3);
